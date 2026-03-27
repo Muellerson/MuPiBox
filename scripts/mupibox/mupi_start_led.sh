@@ -12,6 +12,9 @@ ledMax=$(printf '%d' "$ledMax")
 ledMin=$(/usr/bin/jq -r .shim.ledBrightnessMin ${MUPIBOX_CONFIG})
 ledMin=$(printf '%d' "$ledMin")
 
+rp_version=$(cat /proc/device-tree/model | cut -d " " -f 3)
+
+
 echo "{}" | tee ${TMP_LEDFILE}
 /usr/bin/cat <<< $(/usr/bin/jq --argjson v ${ledPin} '.led_gpio = $v' ${TMP_LEDFILE}) >  ${TMP_LEDFILE}
 /usr/bin/cat <<< $(/usr/bin/jq --argjson v ${ledMax} '.led_max_brightness = $v' ${TMP_LEDFILE}) >  ${TMP_LEDFILE}
@@ -55,7 +58,24 @@ do
 
 		#ledMin=$(echo "scale=2; $ledMin/100" | bc)
 		#ledMax=$(echo "scale=2; $ledMax/100" | bc)
-		displayState=`vcgencmd display_power | grep -o '.$'`
+		#displayState=`vcgencmd display_power | grep -o '.$'`
+        if [ ${rp_version} -eq 5 ]; then
+        	if [ -f /sys/class/drm/card0-HDMI-A-1/status ] && \
+               [ "$(cat /sys/class/drm/card0-HDMI-A-1/status)" = "connected" ]; then
+            		displayState=1
+            elif [ -f /sys/class/drm/card1-DSI-2/status ] && \
+                 [ "$(cat /sys/class/drm/card1-DSI-2/status)" = "connected" ]; then
+                    displayState=1
+            elif [ -f /sys/class/drm/card0-DSI-1/status ] && \
+                  [ "$(cat /sys/class/drm/card0-DSI-1/status)" = "connected" ]; then
+                    displayState=1
+            else
+                    displayState=0
+            fi
+       else	
+	   		displayState=`vcgencmd display_power | grep -o '.$'`
+       fi
+
 		wled_active=$(/usr/bin/jq -r .wled.active ${MUPIBOX_CONFIG})
 		if [ ${displayState} -eq 1 ] && [ ${OLD_STATE} -ne ${displayState} ]
 		then
