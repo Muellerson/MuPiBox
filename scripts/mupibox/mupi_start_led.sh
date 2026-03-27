@@ -21,7 +21,12 @@ echo "{}" | tee ${TMP_LEDFILE}
 /usr/bin/cat <<< $(/usr/bin/jq --argjson v ${ledMin} '.led_min_brightness = $v' ${TMP_LEDFILE}) >  ${TMP_LEDFILE}
 /usr/bin/cat <<< $(/usr/bin/jq '.led_current_brightness = 0' ${TMP_LEDFILE}) >  ${TMP_LEDFILE}
 /usr/bin/cat <<< $(/usr/bin/jq '.led_dim_mode = 0' ${TMP_LEDFILE}) >  ${TMP_LEDFILE}
-/usr/bin/python3 /usr/local/bin/mupibox/led_control.py &
+if [ ${rp_version} -eq 5 ]; then
+        /usr/bin/python3 /usr/local/bin/mupibox/led_control_rp5.py &    
+else
+        /usr/bin/python3 /usr/local/bin/mupibox/led_control.py &
+fi
+
 #/usr/local/bin/mupibox/./led_control &
 
 # WLED
